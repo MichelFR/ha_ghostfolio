@@ -1,0 +1,58 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configurer Ghostfolio",
+        "description": "Saisissez les détails de votre instance Ghostfolio"
+      },
+      "reconfigure": {
+        "title": "Reconfigurer Ghostfolio",
+        "description": "Mettez à jour votre configuration Ghostfolio"
+      }
+    },
+    "data": {
+      "portfolio_name": "Nom du portefeuille",
+      "base_url": "URL de base",
+      "access_token": "Token d'accès",
+      "verify_ssl": "Vérifier le certificat SSL",
+      "update_interval": "Intervalle de mise à jour"
+    },
+    "data_description": {
+      "portfolio_name": "Un nom convivial pour cette instance de portefeuille",
+      "base_url": "L'URL de votre instance Ghostfolio (par ex. https://votre-ghostfolio.com)",
+      "access_token": "Votre token d'accès Ghostfolio pour l'authentification API",
+      "verify_ssl": "Désactivez ceci si vous utilisez des proxys d'entreprise comme Zscaler qui interceptent les certificats SSL",
+      "update_interval": "Fréquence de mise à jour des données de portefeuille (en minutes, min: 1, max: 1440)"
+    },
+    "error": {
+      "cannot_connect": "Échec de la connexion à Ghostfolio",
+      "auth_failed": "Échec de l'authentification. Veuillez vérifier votre token d'accès."
+    },
+    "abort": {
+      "already_configured": "L'instance Ghostfolio est déjà configurée",
+      "reconfigure_successful": "Configuration mise à jour avec succès"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "current_value": {
+        "name": "Valeur actuelle"
+      },
+      "net_performance": {
+        "name": "Performance nette"
+      },
+      "net_performance_percentage": {
+        "name": "Pourcentage de performance nette"
+      },
+      "total_investment": {
+        "name": "Investissement total"
+      },
+      "net_performance_with_currency": {
+        "name": "Performance nette avec effet de change"
+      },
+      "net_performance_percentage_with_currency": {
+        "name": "Pourcentage de performance nette avec effet de change"
+      }
+    }
+  }
+}

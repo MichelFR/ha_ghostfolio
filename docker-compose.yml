@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  homeassistant:
+    container_name: homeassistant-ghostfolio-test
+    image: ghcr.io/home-assistant/home-assistant:stable
+    volumes:
+      - ./config:/config
+      - ./custom_components:/config/custom_components
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    environment:
+      - TZ=Europe/Berlin
