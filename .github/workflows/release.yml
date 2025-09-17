@@ -1,0 +1,100 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'custom_components/ghostfolio/manifest.json'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version from manifest
+        id: version
+        run: |
+          VERSION=$(python3 -c "import json; print(json.load(open('custom_components/ghostfolio/manifest.json'))['version'])")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check if tag exists
+        id: tag_check
+        run: |
+          if git rev-parse "v${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get previous version
+        id: previous_version
+        if: steps.tag_check.outputs.exists == 'false'
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -n "$PREV_TAG" ]; then
+            echo "tag=$PREV_TAG" >> $GITHUB_OUTPUT
+          else
+            echo "tag=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate changelog
+        id: changelog
+        if: steps.tag_check.outputs.exists == 'false'
+        run: |
+          if [ -n "${{ steps.previous_version.outputs.tag }}" ]; then
+            CHANGELOG=$(git log --pretty=format:"- %s" ${{ steps.previous_version.outputs.tag }}..HEAD)
+          else
+            CHANGELOG=$(git log --pretty=format:"- %s")
+          fi
+          
+          # Create multiline output
+          {
+            echo "changes<<EOF"
+            echo "$CHANGELOG"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        if: steps.tag_check.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Release ${{ steps.version.outputs.version }}
+          body: |
+            ## Changes in ${{ steps.version.outputs.version }}
+            
+            ${{ steps.changelog.outputs.changes }}
+            
+            ## Installation
+            
+            ### HACS (Recommended)
+            [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=MichelFR&repository=hacs_ghostfolio&category=integration)
+            
+            - Add this repository as a custom repository in HACS
+            - Install or update the Ghostfolio integration
+            
+            ### Manual Installation
+            - Download the source code zip from the assets below
+            - Extract to `custom_components/ghostfolio/`
+            - Restart Home Assistant
+            
+            ## What's Changed
+            Full Changelog: https://github.com/MichelFR/hacs_ghostfolio/compare/${{ steps.previous_version.outputs.tag }}...${{ steps.version.outputs.tag }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Output result
+        run: |
+          if [ "${{ steps.tag_check.outputs.exists }}" == "true" ]; then
+            echo "Tag v${{ steps.version.outputs.version }} already exists, skipping release creation"
+          else
+            echo "Created release for version ${{ steps.version.outputs.version }}"
+          fi
