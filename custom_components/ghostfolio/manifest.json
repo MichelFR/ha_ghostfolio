@@ -1,9 +1,9 @@
 {
   "domain": "ghostfolio",
   "name": "Ghostfolio",
-  "version": "1.1.0",
-  "documentation": "https://github.com/ghostfolio/ghostfolio",
-  "issue_tracker": "https://github.com/ghostfolio/ghostfolio/issues",
+  "version": "1.1.1",
+  "documentation": "https://github.com/MichelFR/hacs_ghostfolio",
+  "issue_tracker": "https://github.com/MichelFR/hacs_ghostfolio/issues",
   "dependencies": [],
   "codeowners": ["@MichelFR"],
   "requirements": ["aiohttp>=3.8.0"],
