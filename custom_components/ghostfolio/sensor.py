@@ -69,7 +69,8 @@ class GhostfolioCurrentValueSensor(GhostfolioBaseSensor):
     _attr_translation_key = "current_value"
     _attr_device_class = SensorDeviceClass.MONETARY
     _attr_state_class = SensorStateClass.TOTAL
-    _attr_native_unit_of_measurement = "EUR"  # Default, should be dynamic based on user currency
+    _attr_native_unit_of_measurement = "EUR"
+    _attr_suggested_display_precision = 2
 
     def __init__(self, coordinator: GhostfolioDataUpdateCoordinator, config_entry: ConfigEntry) -> None:
         """Initialize the sensor."""
@@ -103,6 +104,7 @@ class GhostfolioNetPerformanceSensor(GhostfolioBaseSensor):
     _attr_device_class = SensorDeviceClass.MONETARY
     _attr_state_class = SensorStateClass.TOTAL
     _attr_native_unit_of_measurement = "EUR"
+    _attr_suggested_display_precision = 2
 
     def __init__(self, coordinator: GhostfolioDataUpdateCoordinator, config_entry: ConfigEntry) -> None:
         """Initialize the sensor."""
@@ -123,10 +125,9 @@ class GhostfolioNetPerformancePercentSensor(GhostfolioBaseSensor):
     """Sensor for net performance percentage."""
 
     _attr_translation_key = "net_performance_percentage"
-    # Remove device class to avoid compatibility issues
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = PERCENTAGE
-    _attr_native_precision = 2  # Display 2 decimal places for percentages
+    _attr_suggested_display_precision = 2
 
     def __init__(self, coordinator: GhostfolioDataUpdateCoordinator, config_entry: ConfigEntry) -> None:
         """Initialize the sensor."""
@@ -139,7 +140,6 @@ class GhostfolioNetPerformancePercentSensor(GhostfolioBaseSensor):
         if not self.coordinator.data:
             return None
         percent_value = self.coordinator.data.get("performance", {}).get("netPerformancePercentage")
-        # Convert from decimal to percentage without manual rounding - let HA handle precision
         return percent_value * 100 if percent_value is not None else None
 
 
@@ -150,6 +150,7 @@ class GhostfolioTotalInvestmentSensor(GhostfolioBaseSensor):
     _attr_device_class = SensorDeviceClass.MONETARY
     _attr_state_class = SensorStateClass.TOTAL
     _attr_native_unit_of_measurement = "EUR"
+    _attr_suggested_display_precision = 2
 
     def __init__(self, coordinator: GhostfolioDataUpdateCoordinator, config_entry: ConfigEntry) -> None:
         """Initialize the sensor."""
@@ -171,6 +172,7 @@ class GhostfolioNetPerformanceWithCurrencySensor(GhostfolioBaseSensor):
     _attr_device_class = SensorDeviceClass.MONETARY
     _attr_state_class = SensorStateClass.TOTAL
     _attr_native_unit_of_measurement = "EUR"
+    _attr_suggested_display_precision = 2
 
     def __init__(self, coordinator: GhostfolioDataUpdateCoordinator, config_entry: ConfigEntry) -> None:
         """Initialize the sensor."""
@@ -189,10 +191,9 @@ class GhostfolioNetPerformancePercentWithCurrencySensor(GhostfolioBaseSensor):
     """Sensor for net performance percentage with currency effect."""
 
     _attr_translation_key = "net_performance_percentage_with_currency"
-    # Remove device class to avoid compatibility issues
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = PERCENTAGE
-    _attr_native_precision = 2  # Display 2 decimal places for percentages
+    _attr_suggested_display_precision = 2
 
     def __init__(self, coordinator: GhostfolioDataUpdateCoordinator, config_entry: ConfigEntry) -> None:
         """Initialize the sensor."""
@@ -205,5 +206,4 @@ class GhostfolioNetPerformancePercentWithCurrencySensor(GhostfolioBaseSensor):
         if not self.coordinator.data:
             return None
         percent_value = self.coordinator.data.get("performance", {}).get("netPerformancePercentageWithCurrencyEffect")
-        # Convert from decimal to percentage without manual rounding - let HA handle precision
         return percent_value * 100 if percent_value is not None else None
