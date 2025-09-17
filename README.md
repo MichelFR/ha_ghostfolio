@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="custom_components/ghostfolio/icon.png" alt="Ghostfolio Logo" width="120" height="120">
+</div>
+
 # Ghostfolio Home Assistant Integration
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=MichelFR&repository=hacs_ghostfolio&category=integration)
