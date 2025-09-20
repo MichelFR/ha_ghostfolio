@@ -1,13 +1,13 @@
 {
   "domain": "ghostfolio",
   "name": "Ghostfolio",
-  "version": "1.1.6",
-  "documentation": "https://github.com/MichelFR/ha_ghostfolio",
-  "issue_tracker": "https://github.com/MichelFR/ha_ghostfolio/issues",
-  "dependencies": [],
   "codeowners": ["@MichelFR"],
-  "requirements": ["aiohttp>=3.8.0"],
   "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/MichelFR/ha_ghostfolio",
+  "integration_type": "service",
   "iot_class": "cloud_polling",
-  "integration_type": "service"
+  "issue_tracker": "https://github.com/MichelFR/ha_ghostfolio/issues",
+  "requirements": ["aiohttp>=3.8.0"],
+  "version": "1.1.7"
 }
