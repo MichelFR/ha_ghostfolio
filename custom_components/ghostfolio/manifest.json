@@ -1,7 +1,7 @@
 {
   "domain": "ghostfolio",
   "name": "Ghostfolio",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "documentation": "https://github.com/MichelFR/ha_ghostfolio",
   "issue_tracker": "https://github.com/MichelFR/ha_ghostfolio/issues",
   "dependencies": [],
