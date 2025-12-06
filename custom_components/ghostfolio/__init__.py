@@ -51,7 +51,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    coordinator: GhostfolioDataUpdateCoordinator = entry.runtime_data
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    if unload_ok:
+        await coordinator.api.close()
+    return unload_ok
 
 
 
@@ -95,10 +99,19 @@ class GhostfolioDataUpdateCoordinator(DataUpdateCoordinator):
         performance_by_range: dict[str, dict] = {}
         first_order_date = None
         for range_param, result in zip(self.ranges, performance_results, strict=False):
-            if isinstance(result, dict):
-                performance_by_range[range_param] = result
-                if first_order_date is None:
-                    first_order_date = result.get("firstOrderDate")
+            if not isinstance(result, dict):
+                continue
+
+            perf = result.get("performance")
+            perf_data = perf if isinstance(perf, dict) else result
+            performance_by_range[range_param] = perf_data
+
+            if first_order_date is None:
+                first_order_date = result.get("firstOrderDate")
+
+            if base_currency is None:
+                if isinstance(perf_data, dict):
+                    base_currency = perf_data.get("baseCurrency")
 
         return {
             "base_currency": base_currency,
