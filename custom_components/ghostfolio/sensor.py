@@ -23,6 +23,13 @@ from .const import (
 )
 
 
+def _build_unique_id(base: str, range_param: str, entry_id: str) -> str:
+    """Build a unique_id, omitting the range for 'max' to keep legacy IDs."""
+    if range_param.lower() == "max":
+        return f"{base}_{entry_id}"
+    return f"{base}_{range_param}_{entry_id}"
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -212,8 +219,8 @@ class GhostfolioNetPerformanceSensor(GhostfolioMonetarySensor):
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator, config_entry, range_param)
-        self._attr_unique_id = (
-            f"ghostfolio_net_performance_{range_param}_{config_entry.entry_id}"
+        self._attr_unique_id = _build_unique_id(
+            "ghostfolio_net_performance", range_param, config_entry.entry_id
         )
 
     @property
@@ -239,8 +246,8 @@ class GhostfolioNetPerformancePercentSensor(GhostfolioRangeSensor):
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator, config_entry, range_param)
-        self._attr_unique_id = (
-            f"ghostfolio_net_performance_percent_{range_param}_{config_entry.entry_id}"
+        self._attr_unique_id = _build_unique_id(
+            "ghostfolio_net_performance_percent", range_param, config_entry.entry_id
         )
 
     @property
@@ -292,8 +299,10 @@ class GhostfolioNetPerformanceWithCurrencySensor(GhostfolioMonetarySensor):
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator, config_entry, range_param)
-        self._attr_unique_id = (
-            f"ghostfolio_net_performance_with_currency_{range_param}_{config_entry.entry_id}"
+        self._attr_unique_id = _build_unique_id(
+            "ghostfolio_net_performance_with_currency",
+            range_param,
+            config_entry.entry_id,
         )
 
     @property
@@ -319,8 +328,10 @@ class GhostfolioNetPerformancePercentWithCurrencySensor(GhostfolioRangeSensor):
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator, config_entry, range_param)
-        self._attr_unique_id = (
-            f"ghostfolio_net_performance_percent_with_currency_{range_param}_{config_entry.entry_id}"
+        self._attr_unique_id = _build_unique_id(
+            "ghostfolio_net_performance_percent_with_currency",
+            range_param,
+            config_entry.entry_id,
         )
 
     @property
