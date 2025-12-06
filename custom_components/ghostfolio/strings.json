@@ -9,14 +9,16 @@
           "base_url": "Base URL",
           "access_token": "Access Token",
           "verify_ssl": "Verify SSL Certificate",
-          "update_interval": "Update Interval"
+          "update_interval": "Update Interval",
+          "performance_ranges": "Performance Ranges"
         },
         "data_description": {
           "portfolio_name": "A friendly name for this portfolio instance",
           "base_url": "The URL of your Ghostfolio instance (e.g., https://your-ghostfolio.com)",
           "access_token": "Your Ghostfolio access token for API authentication",
           "verify_ssl": "Disable this if you're using corporate proxies like Zscaler that intercept SSL certificates",
-          "update_interval": "How often to update portfolio data (in minutes, min: 1, max: 1440)"
+          "update_interval": "How often to update portfolio data (in minutes, min: 1, max: 1440)",
+          "performance_ranges": "Which performance ranges to create sensors for"
         }
       },
       "reconfigure": {
@@ -27,14 +29,16 @@
           "base_url": "Base URL",
           "access_token": "Access Token",
           "verify_ssl": "Verify SSL Certificate",
-          "update_interval": "Update Interval"
+          "update_interval": "Update Interval",
+          "performance_ranges": "Performance Ranges"
         },
         "data_description": {
           "portfolio_name": "A friendly name for this portfolio instance",
           "base_url": "The URL of your Ghostfolio instance (e.g., https://your-ghostfolio.com)",
           "access_token": "Your Ghostfolio access token for API authentication",
           "verify_ssl": "Disable this if you're using corporate proxies like Zscaler that intercept SSL certificates",
-          "update_interval": "How often to update portfolio data (in minutes, min: 1, max: 1440)"
+          "update_interval": "How often to update portfolio data (in minutes, min: 1, max: 1440)",
+          "performance_ranges": "Which performance ranges to create sensors for"
         }
       }
     },
@@ -53,19 +57,19 @@
         "name": "Current Value"
       },
       "net_performance": {
-        "name": "Net Performance"
+        "name": "{range} Net Performance"
       },
       "net_performance_percentage": {
-        "name": "Net Performance Percentage"
+        "name": "{range} Net Performance Percentage"
       },
       "total_investment": {
         "name": "Total Investment"
       },
       "net_performance_with_currency": {
-        "name": "Net Performance With Currency Effect"
+        "name": "{range} Net Performance With Currency Effect"
       },
       "net_performance_percentage_with_currency": {
-        "name": "Net Performance Percentage With Currency Effect"
+        "name": "{range} Net Performance Percentage With Currency Effect"
       }
     }
   }

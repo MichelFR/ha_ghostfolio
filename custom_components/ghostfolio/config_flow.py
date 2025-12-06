@@ -14,6 +14,10 @@ from homeassistant.helpers.selector import (
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
+    SelectOptionDict,
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
     TextSelector,
     TextSelectorConfig,
     TextSelectorType,
@@ -24,10 +28,13 @@ from .const import (
     CONF_ACCESS_TOKEN, 
     CONF_BASE_URL, 
     CONF_PORTFOLIO_NAME,
+    CONF_PERFORMANCE_RANGES,
     CONF_VERIFY_SSL, 
     CONF_UPDATE_INTERVAL,
+    DEFAULT_PERFORMANCE_RANGES,
     DEFAULT_UPDATE_INTERVAL,
-    DOMAIN
+    DOMAIN,
+    PERFORMANCE_RANGE_OPTIONS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -44,6 +51,10 @@ class GhostfolioConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle the initial step."""
         errors: dict[str, str] = {}
 
+        range_options = [
+            SelectOptionDict(value=option, label=option.upper()) for option in PERFORMANCE_RANGE_OPTIONS
+        ]
+
         if user_input is not None:
             # Test the connection
             api = GhostfolioAPI(
@@ -57,7 +68,8 @@ class GhostfolioConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 auth_token = await api.authenticate()
                 if auth_token:
                     # Test portfolio access
-                    await api.get_portfolio_performance()
+                    for range_param in user_input.get(CONF_PERFORMANCE_RANGES, DEFAULT_PERFORMANCE_RANGES):
+                        await api.get_portfolio_performance(range_param)
                     
                     # Set unique ID based on base URL and portfolio name
                     portfolio_name = user_input.get(CONF_PORTFOLIO_NAME, "Ghostfolio")
@@ -103,6 +115,15 @@ class GhostfolioConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                             unit_of_measurement="minutes",
                         )
                     ),
+                    vol.Required(
+                        CONF_PERFORMANCE_RANGES, default=DEFAULT_PERFORMANCE_RANGES
+                    ): SelectSelector(
+                        SelectSelectorConfig(
+                            options=range_options,
+                            multiple=True,
+                            mode=SelectSelectorMode.DROPDOWN,
+                        )
+                    ),
                 }
             ),
             errors=errors,
@@ -114,6 +135,10 @@ class GhostfolioConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle reconfiguration of the integration."""
         config_entry = self._get_reconfigure_entry()
         errors: dict[str, str] = {}
+
+        range_options = [
+            SelectOptionDict(value=option, label=option.upper()) for option in PERFORMANCE_RANGE_OPTIONS
+        ]
 
         if user_input is not None:
             # Test the connection with new settings
@@ -128,7 +153,8 @@ class GhostfolioConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 auth_token = await api.authenticate()
                 if auth_token:
                     # Test portfolio access
-                    await api.get_portfolio_performance()
+                    for range_param in user_input.get(CONF_PERFORMANCE_RANGES, DEFAULT_PERFORMANCE_RANGES):
+                        await api.get_portfolio_performance(range_param)
                     
                     # Set unique ID based on base URL and portfolio name to check for conflicts
                     portfolio_name = user_input.get(CONF_PORTFOLIO_NAME, "Ghostfolio")
@@ -177,6 +203,15 @@ class GhostfolioConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                                 min=1,
                                 max=1440,  # Max 24 hours
                                 unit_of_measurement="minutes",
+                            )
+                        ),
+                        vol.Required(
+                            CONF_PERFORMANCE_RANGES, default=DEFAULT_PERFORMANCE_RANGES
+                        ): SelectSelector(
+                            SelectSelectorConfig(
+                                options=range_options,
+                                multiple=True,
+                                mode=SelectSelectorMode.DROPDOWN,
                             )
                         ),
                     }

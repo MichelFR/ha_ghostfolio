@@ -1,7 +1,6 @@
 """Sensor platform for Ghostfolio integration."""
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 from homeassistant.components.sensor import (
@@ -16,9 +15,12 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import GhostfolioDataUpdateCoordinator
-from .const import CONF_PORTFOLIO_NAME, DOMAIN
-
-_LOGGER = logging.getLogger(__name__)
+from .const import (
+    CONF_PERFORMANCE_RANGES,
+    CONF_PORTFOLIO_NAME,
+    DEFAULT_PERFORMANCE_RANGES,
+    DOMAIN,
+)
 
 
 async def async_setup_entry(
@@ -29,14 +31,29 @@ async def async_setup_entry(
     """Set up Ghostfolio sensor platform."""
     coordinator = config_entry.runtime_data
 
-    entities = [
+    performance_ranges: list[str] = config_entry.data.get(
+        CONF_PERFORMANCE_RANGES, DEFAULT_PERFORMANCE_RANGES
+    )
+
+    entities: list[SensorEntity] = [
         GhostfolioCurrentValueSensor(coordinator, config_entry),
-        GhostfolioNetPerformanceSensor(coordinator, config_entry),
-        GhostfolioNetPerformancePercentSensor(coordinator, config_entry),
         GhostfolioTotalInvestmentSensor(coordinator, config_entry),
-        GhostfolioNetPerformanceWithCurrencySensor(coordinator, config_entry),
-        GhostfolioNetPerformancePercentWithCurrencySensor(coordinator, config_entry),
     ]
+    for range_param in performance_ranges:
+        entities.extend(
+            [
+                GhostfolioNetPerformanceSensor(coordinator, config_entry, range_param),
+                GhostfolioNetPerformancePercentSensor(
+                    coordinator, config_entry, range_param
+                ),
+                GhostfolioNetPerformanceWithCurrencySensor(
+                    coordinator, config_entry, range_param
+                ),
+                GhostfolioNetPerformancePercentWithCurrencySensor(
+                    coordinator, config_entry, range_param
+                ),
+            ]
+        )
 
     async_add_entities(entities)
 
@@ -46,7 +63,9 @@ class GhostfolioBaseSensor(CoordinatorEntity, SensorEntity):
 
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator: GhostfolioDataUpdateCoordinator, config_entry: ConfigEntry) -> None:
+    def __init__(
+        self, coordinator: GhostfolioDataUpdateCoordinator, config_entry: ConfigEntry
+    ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
         self.config_entry = config_entry
@@ -69,17 +88,64 @@ class GhostfolioBaseSensor(CoordinatorEntity, SensorEntity):
             return "EUR"
 
         currency = None
-        if isinstance(self.coordinator.data, dict):
-            currency = self.coordinator.data.get("base_currency")
-            if not currency:
-                performance = self.coordinator.data.get("performance", {})
-                if isinstance(performance, dict):
-                    currency = performance.get("baseCurrency")
+        data = self.coordinator.data
+        if isinstance(data, dict):
+            currency = data.get("base_currency")
+            performance = data.get("performance")
+            if not currency and isinstance(performance, dict):
+                if isinstance(self, GhostfolioRangeSensor):
+                    range_data = performance.get(self.range_param)
+                    if isinstance(range_data, dict):
+                        currency = range_data.get("baseCurrency")
+                if not currency:
+                    for perf_data in performance.values():
+                        if isinstance(perf_data, dict):
+                            currency = perf_data.get("baseCurrency")
+                            if currency:
+                                break
 
         return currency or "EUR"
 
+    def _first_performance(self) -> dict[str, Any]:
+        """Return the first available performance entry."""
+        performance = self.coordinator.data.get("performance", {})
+        if isinstance(performance, dict):
+            for data in performance.values():
+                if isinstance(data, dict):
+                    return data
+        return {}
 
-class GhostfolioMonetarySensor(GhostfolioBaseSensor):
+
+class GhostfolioRangeSensor(GhostfolioBaseSensor):
+    """Base class for Ghostfolio sensors tied to a specific performance range."""
+
+    def __init__(
+        self,
+        coordinator: GhostfolioDataUpdateCoordinator,
+        config_entry: ConfigEntry,
+        range_param: str,
+    ) -> None:
+        """Initialize the range sensor."""
+        super().__init__(coordinator, config_entry)
+        self.range_param = range_param
+        self.range_label = range_param.upper()
+        self._attr_translation_placeholders = {"range": self.range_label}
+
+    @property
+    def performance_data(self) -> dict[str, Any]:
+        """Return performance data for this sensor's range."""
+        if not self.coordinator.data:
+            return {}
+
+        performance = self.coordinator.data.get("performance", {})
+        if isinstance(performance, dict):
+            range_data = performance.get(self.range_param)
+            if isinstance(range_data, dict):
+                return range_data
+        return {}
+
+
+class GhostfolioMonetarySensor(GhostfolioRangeSensor):
     """Base class for monetary Ghostfolio sensors."""
 
     _attr_device_class = SensorDeviceClass.MONETARY
@@ -92,30 +158,41 @@ class GhostfolioMonetarySensor(GhostfolioBaseSensor):
         return self.base_currency
 
 
-class GhostfolioCurrentValueSensor(GhostfolioMonetarySensor):
-    """Sensor for current portfolio value."""
+class GhostfolioCurrentValueSensor(GhostfolioBaseSensor):
+    """Sensor for current portfolio value (range-independent)."""
 
     _attr_translation_key = "current_value"
+    _attr_device_class = SensorDeviceClass.MONETARY
+    _attr_state_class = SensorStateClass.TOTAL
+    _attr_suggested_display_precision = 2
 
-    def __init__(self, coordinator: GhostfolioDataUpdateCoordinator, config_entry: ConfigEntry) -> None:
+    def __init__(
+        self,
+        coordinator: GhostfolioDataUpdateCoordinator,
+        config_entry: ConfigEntry,
+    ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator, config_entry)
         self._attr_unique_id = f"ghostfolio_current_value_{config_entry.entry_id}"
 
     @property
+    def native_unit_of_measurement(self) -> str:
+        """Return native unit of measurement based on base currency."""
+        return self.base_currency
+
+    @property
     def native_value(self) -> float | None:
         """Return the current portfolio value."""
-        if not self.coordinator.data:
-            return None
-        return self.coordinator.data.get("performance", {}).get("currentValueInBaseCurrency")
+        performance = self._first_performance()
+        return performance.get("currentValueInBaseCurrency")
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
         """Return additional state attributes."""
-        if not self.coordinator.data:
+        performance = self._first_performance()
+        if not performance:
             return None
-        
-        performance = self.coordinator.data.get("performance", {})
+
         return {
             "current_net_worth": performance.get("currentNetWorth"),
             "first_order_date": self.coordinator.data.get("firstOrderDate"),
@@ -127,22 +204,26 @@ class GhostfolioNetPerformanceSensor(GhostfolioMonetarySensor):
 
     _attr_translation_key = "net_performance"
 
-    def __init__(self, coordinator: GhostfolioDataUpdateCoordinator, config_entry: ConfigEntry) -> None:
+    def __init__(
+        self,
+        coordinator: GhostfolioDataUpdateCoordinator,
+        config_entry: ConfigEntry,
+        range_param: str,
+    ) -> None:
         """Initialize the sensor."""
-        super().__init__(coordinator, config_entry)
-        self._attr_unique_id = f"ghostfolio_net_performance_{config_entry.entry_id}"
+        super().__init__(coordinator, config_entry, range_param)
+        self._attr_unique_id = (
+            f"ghostfolio_net_performance_{range_param}_{config_entry.entry_id}"
+        )
 
     @property
     def native_value(self) -> float | None:
         """Return the net performance."""
-        if not self.coordinator.data:
-            return None
-        return self.coordinator.data.get("performance", {}).get("netPerformance")
+        performance = self.performance_data
+        return performance.get("netPerformance")
 
 
-
-
-class GhostfolioNetPerformancePercentSensor(GhostfolioBaseSensor):
+class GhostfolioNetPerformancePercentSensor(GhostfolioRangeSensor):
     """Sensor for net performance percentage."""
 
     _attr_translation_key = "net_performance_percentage"
@@ -150,36 +231,52 @@ class GhostfolioNetPerformancePercentSensor(GhostfolioBaseSensor):
     _attr_native_unit_of_measurement = PERCENTAGE
     _attr_suggested_display_precision = 2
 
-    def __init__(self, coordinator: GhostfolioDataUpdateCoordinator, config_entry: ConfigEntry) -> None:
+    def __init__(
+        self,
+        coordinator: GhostfolioDataUpdateCoordinator,
+        config_entry: ConfigEntry,
+        range_param: str,
+    ) -> None:
         """Initialize the sensor."""
-        super().__init__(coordinator, config_entry)
-        self._attr_unique_id = f"ghostfolio_net_performance_percent_{config_entry.entry_id}"
+        super().__init__(coordinator, config_entry, range_param)
+        self._attr_unique_id = (
+            f"ghostfolio_net_performance_percent_{range_param}_{config_entry.entry_id}"
+        )
 
     @property
     def native_value(self) -> float | None:
         """Return the net performance percentage."""
-        if not self.coordinator.data:
-            return None
-        percent_value = self.coordinator.data.get("performance", {}).get("netPerformancePercentage")
+        percent_value = self.performance_data.get("netPerformancePercentage")
         return percent_value * 100 if percent_value is not None else None
 
 
-class GhostfolioTotalInvestmentSensor(GhostfolioMonetarySensor):
-    """Sensor for total investment."""
+class GhostfolioTotalInvestmentSensor(GhostfolioBaseSensor):
+    """Sensor for total investment (range-independent)."""
 
     _attr_translation_key = "total_investment"
+    _attr_device_class = SensorDeviceClass.MONETARY
+    _attr_state_class = SensorStateClass.TOTAL
+    _attr_suggested_display_precision = 2
 
-    def __init__(self, coordinator: GhostfolioDataUpdateCoordinator, config_entry: ConfigEntry) -> None:
+    def __init__(
+        self,
+        coordinator: GhostfolioDataUpdateCoordinator,
+        config_entry: ConfigEntry,
+    ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator, config_entry)
         self._attr_unique_id = f"ghostfolio_total_investment_{config_entry.entry_id}"
 
     @property
+    def native_unit_of_measurement(self) -> str:
+        """Return native unit of measurement based on base currency."""
+        return self.base_currency
+
+    @property
     def native_value(self) -> float | None:
         """Return the total investment."""
-        if not self.coordinator.data:
-            return None
-        return self.coordinator.data.get("performance", {}).get("totalInvestment")
+        performance = self._first_performance()
+        return performance.get("totalInvestment")
 
 
 class GhostfolioNetPerformanceWithCurrencySensor(GhostfolioMonetarySensor):
@@ -187,20 +284,26 @@ class GhostfolioNetPerformanceWithCurrencySensor(GhostfolioMonetarySensor):
 
     _attr_translation_key = "net_performance_with_currency"
 
-    def __init__(self, coordinator: GhostfolioDataUpdateCoordinator, config_entry: ConfigEntry) -> None:
+    def __init__(
+        self,
+        coordinator: GhostfolioDataUpdateCoordinator,
+        config_entry: ConfigEntry,
+        range_param: str,
+    ) -> None:
         """Initialize the sensor."""
-        super().__init__(coordinator, config_entry)
-        self._attr_unique_id = f"ghostfolio_net_performance_with_currency_{config_entry.entry_id}"
+        super().__init__(coordinator, config_entry, range_param)
+        self._attr_unique_id = (
+            f"ghostfolio_net_performance_with_currency_{range_param}_{config_entry.entry_id}"
+        )
 
     @property
     def native_value(self) -> float | None:
         """Return the net performance with currency effect."""
-        if not self.coordinator.data:
-            return None
-        return self.coordinator.data.get("performance", {}).get("netPerformanceWithCurrencyEffect")
+        performance = self.performance_data
+        return performance.get("netPerformanceWithCurrencyEffect")
 
 
-class GhostfolioNetPerformancePercentWithCurrencySensor(GhostfolioBaseSensor):
+class GhostfolioNetPerformancePercentWithCurrencySensor(GhostfolioRangeSensor):
     """Sensor for net performance percentage with currency effect."""
 
     _attr_translation_key = "net_performance_percentage_with_currency"
@@ -208,15 +311,22 @@ class GhostfolioNetPerformancePercentWithCurrencySensor(GhostfolioBaseSensor):
     _attr_native_unit_of_measurement = PERCENTAGE
     _attr_suggested_display_precision = 2
 
-    def __init__(self, coordinator: GhostfolioDataUpdateCoordinator, config_entry: ConfigEntry) -> None:
+    def __init__(
+        self,
+        coordinator: GhostfolioDataUpdateCoordinator,
+        config_entry: ConfigEntry,
+        range_param: str,
+    ) -> None:
         """Initialize the sensor."""
-        super().__init__(coordinator, config_entry)
-        self._attr_unique_id = f"ghostfolio_net_performance_percent_with_currency_{config_entry.entry_id}"
+        super().__init__(coordinator, config_entry, range_param)
+        self._attr_unique_id = (
+            f"ghostfolio_net_performance_percent_with_currency_{range_param}_{config_entry.entry_id}"
+        )
 
     @property
     def native_value(self) -> float | None:
         """Return the net performance percentage with currency effect."""
-        if not self.coordinator.data:
-            return None
-        percent_value = self.coordinator.data.get("performance", {}).get("netPerformancePercentageWithCurrencyEffect")
+        percent_value = self.performance_data.get(
+            "netPerformancePercentageWithCurrencyEffect"
+        )
         return percent_value * 100 if percent_value is not None else None

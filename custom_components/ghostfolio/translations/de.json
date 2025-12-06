@@ -15,14 +15,16 @@
       "base_url": "Basis-URL",
       "access_token": "Zugangstoken",
       "verify_ssl": "SSL-Zertifikat verifizieren",
-      "update_interval": "Aktualisierungsintervall"
+      "update_interval": "Aktualisierungsintervall",
+      "performance_ranges": "Performance-Bereiche"
     },
     "data_description": {
       "portfolio_name": "Ein benutzerfreundlicher Name für diese Portfolio-Instanz",
       "base_url": "Die URL Ihrer Ghostfolio-Instanz (z.B. https://ihr-ghostfolio.com)",
       "access_token": "Ihr Ghostfolio-Zugangstoken für die API-Authentifizierung",
       "verify_ssl": "Deaktivieren Sie dies, wenn Sie Unternehmens-Proxys wie Zscaler verwenden, die SSL-Zertifikate abfangen",
-      "update_interval": "Wie oft Portfolio-Daten aktualisiert werden sollen (in Minuten, min: 1, max: 1440)"
+      "update_interval": "Wie oft Portfolio-Daten aktualisiert werden sollen (in Minuten, min: 1, max: 1440)",
+      "performance_ranges": "Welche Performance-Bereiche für Sensoren genutzt werden sollen"
     },
     "error": {
       "cannot_connect": "Verbindung zu Ghostfolio fehlgeschlagen",
@@ -39,19 +41,19 @@
         "name": "Aktueller Wert"
       },
       "net_performance": {
-        "name": "Nettoperformance"
+        "name": "{range} Nettoperformance"
       },
       "net_performance_percentage": {
-        "name": "Nettoperformance Prozentsatz"
+        "name": "{range} Nettoperformance Prozentsatz"
       },
       "total_investment": {
         "name": "Gesamtinvestition"
       },
       "net_performance_with_currency": {
-        "name": "Nettoperformance mit Währungseffekt"
+        "name": "{range} Nettoperformance mit Währungseffekt"
       },
       "net_performance_percentage_with_currency": {
-        "name": "Nettoperformance Prozentsatz mit Währungseffekt"
+        "name": "{range} Nettoperformance Prozentsatz mit Währungseffekt"
       }
     }
   }
