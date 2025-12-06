@@ -128,7 +128,7 @@ class GhostfolioRangeSensor(GhostfolioBaseSensor):
         """Initialize the range sensor."""
         super().__init__(coordinator, config_entry)
         self.range_param = range_param
-        self.range_label = range_param.upper()
+        self.range_label = "" if range_param.lower() == "max" else f"{range_param.upper()} "
         self._attr_translation_placeholders = {"range": self.range_label}
 
     @property

@@ -41,19 +41,19 @@
         "name": "Valeur actuelle"
       },
       "net_performance": {
-        "name": "{range} Performance nette"
+        "name": "{range}Performance nette"
       },
       "net_performance_percentage": {
-        "name": "{range} Pourcentage de performance nette"
+        "name": "{range}Pourcentage de performance nette"
       },
       "total_investment": {
         "name": "Investissement total"
       },
       "net_performance_with_currency": {
-        "name": "{range} Performance nette avec effet de change"
+        "name": "{range}Performance nette avec effet de change"
       },
       "net_performance_percentage_with_currency": {
-        "name": "{range} Pourcentage de performance nette avec effet de change"
+        "name": "{range}Pourcentage de performance nette avec effet de change"
       }
     }
   }

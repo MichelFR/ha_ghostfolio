@@ -41,19 +41,19 @@
         "name": "Aktueller Wert"
       },
       "net_performance": {
-        "name": "{range} Nettoperformance"
+        "name": "{range}Nettoperformance"
       },
       "net_performance_percentage": {
-        "name": "{range} Nettoperformance Prozentsatz"
+        "name": "{range}Nettoperformance Prozentsatz"
       },
       "total_investment": {
         "name": "Gesamtinvestition"
       },
       "net_performance_with_currency": {
-        "name": "{range} Nettoperformance mit Währungseffekt"
+        "name": "{range}Nettoperformance mit Währungseffekt"
       },
       "net_performance_percentage_with_currency": {
-        "name": "{range} Nettoperformance Prozentsatz mit Währungseffekt"
+        "name": "{range}Nettoperformance Prozentsatz mit Währungseffekt"
       }
     }
   }

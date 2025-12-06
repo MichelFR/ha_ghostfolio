@@ -57,19 +57,19 @@
         "name": "Current Value"
       },
       "net_performance": {
-        "name": "{range} Net Performance"
+        "name": "{range}Net Performance"
       },
       "net_performance_percentage": {
-        "name": "{range} Net Performance Percentage"
+        "name": "{range}Net Performance Percentage"
       },
       "total_investment": {
         "name": "Total Investment"
       },
       "net_performance_with_currency": {
-        "name": "{range} Net Performance With Currency Effect"
+        "name": "{range}Net Performance With Currency Effect"
       },
       "net_performance_percentage_with_currency": {
-        "name": "{range} Net Performance Percentage With Currency Effect"
+        "name": "{range}Net Performance Percentage With Currency Effect"
       }
     }
   }
