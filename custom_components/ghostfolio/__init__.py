@@ -1,9 +1,9 @@
 """The Ghostfolio integration."""
 from __future__ import annotations
 
+import asyncio
 import logging
-from datetime import datetime, timedelta, timezone
-from typing import Any
+from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
@@ -60,4 +60,16 @@ class GhostfolioDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self):
         """Fetch data from Ghostfolio API."""
-        return await self.api.get_portfolio_performance()
+        performance_data, user_settings = await asyncio.gather(
+            self.api.get_portfolio_performance(),
+            self.api.get_user_settings(),
+        )
+
+        base_currency = None
+        if isinstance(user_settings, dict):
+            base_currency = user_settings.get("settings", {}).get("baseCurrency")
+
+        if isinstance(performance_data, dict):
+            performance_data["base_currency"] = base_currency
+
+        return performance_data

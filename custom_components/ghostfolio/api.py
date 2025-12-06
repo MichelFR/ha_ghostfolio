@@ -40,52 +40,29 @@ class GhostfolioAPI:
                     data = await response.json()
                     self.auth_token = data.get("authToken")
                     return self.auth_token
-                else:
-                    _LOGGER.error("Authentication failed with status %s", response.status)
-                    response_text = await response.text()
-                    _LOGGER.debug("Response: %s", response_text)
-                    raise GhostfolioAuthError(f"Authentication failed: {response.status}")
+
+                _LOGGER.error("Authentication failed with status %s", response.status)
+                response_text = await response.text()
+                _LOGGER.debug("Response: %s", response_text)
+                raise GhostfolioAuthError(f"Authentication failed: {response.status}")
         except aiohttp.ClientError as err:
             _LOGGER.error("HTTP error during authentication: %s", err)
             raise GhostfolioAPIError(f"Connection error: {err}") from err
 
     async def get_portfolio_performance(self, range_param: str = "max") -> dict[str, Any]:
         """Get portfolio performance data."""
-        if not self.auth_token:
-            await self.authenticate()
-
         url = f"{self.base_url}/api/v2/portfolio/performance"
         params = {"range": range_param}
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        data = await self._get(url, params=params)
+        _LOGGER.debug("Portfolio performance data retrieved successfully")
+        return data
 
-        try:
-            async with self._get_session().get(url, params=params, headers=headers) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    _LOGGER.debug("Portfolio performance data retrieved successfully")
-                    return data
-                elif response.status == 401:
-                    # Token might be expired, try to re-authenticate
-                    _LOGGER.info("Token expired, re-authenticating...")
-                    await self.authenticate()
-                    headers = {"Authorization": f"Bearer {self.auth_token}"}
-                    
-                    async with self._get_session().get(url, params=params, headers=headers) as retry_response:
-                        if retry_response.status == 200:
-                            data = await retry_response.json()
-                            _LOGGER.debug("Portfolio performance data retrieved successfully after re-auth")
-                            return data
-                        else:
-                            response_text = await retry_response.text()
-                            _LOGGER.error("Failed to get portfolio data after re-auth: %s", response_text)
-                            raise GhostfolioAPIError(f"API request failed: {retry_response.status}")
-                else:
-                    response_text = await response.text()
-                    _LOGGER.error("Failed to get portfolio data: %s", response_text)
-                    raise GhostfolioAPIError(f"API request failed: {response.status}")
-        except aiohttp.ClientError as err:
-            _LOGGER.error("HTTP error during portfolio request: %s", err)
-            raise GhostfolioAPIError(f"Connection error: {err}") from err
+    async def get_user_settings(self) -> dict[str, Any]:
+        """Get user settings including base currency."""
+        url = f"{self.base_url}/api/v1/user"
+        data = await self._get(url)
+        _LOGGER.debug("User settings retrieved successfully")
+        return data
 
     def _get_session(self) -> aiohttp.ClientSession:
         """Get or create aiohttp session."""
@@ -96,6 +73,38 @@ class GhostfolioAPI:
                 connector = aiohttp.TCPConnector(ssl=False)
             self._session = aiohttp.ClientSession(timeout=timeout, connector=connector)
         return self._session
+
+    async def _get(self, url: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Perform an authenticated GET request with token refresh."""
+        if not self.auth_token:
+            await self.authenticate()
+
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+
+        try:
+            async with self._get_session().get(url, params=params, headers=headers) as response:
+                if response.status == 200:
+                    return await response.json()
+
+                if response.status == 401:
+                    _LOGGER.info("Token expired, re-authenticating...")
+                    await self.authenticate()
+                    headers["Authorization"] = f"Bearer {self.auth_token}"
+
+                    async with self._get_session().get(url, params=params, headers=headers) as retry_response:
+                        if retry_response.status == 200:
+                            return await retry_response.json()
+
+                        response_text = await retry_response.text()
+                        _LOGGER.error("Failed to get data after re-auth: %s", response_text)
+                        raise GhostfolioAPIError(f"API request failed: {retry_response.status}")
+
+                response_text = await response.text()
+                _LOGGER.error("Failed to get data: %s", response_text)
+                raise GhostfolioAPIError(f"API request failed: {response.status}")
+        except aiohttp.ClientError as err:
+            _LOGGER.error("HTTP error during request: %s", err)
+            raise GhostfolioAPIError(f"Connection error: {err}") from err
 
     async def close(self) -> None:
         """Close the aiohttp session."""

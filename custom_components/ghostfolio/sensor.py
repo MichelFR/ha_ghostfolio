@@ -10,7 +10,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CURRENCY_EURO, PERCENTAGE
+from homeassistant.const import PERCENTAGE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -51,10 +51,10 @@ class GhostfolioBaseSensor(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator)
         self.config_entry = config_entry
         portfolio_name = config_entry.data.get(CONF_PORTFOLIO_NAME, "Ghostfolio")
-        
+
         # Use portfolio name in device identifier to ensure uniqueness
         device_id = f"ghostfolio_portfolio_{config_entry.entry_id}"
-        
+
         self._attr_device_info = {
             "identifiers": {(DOMAIN, device_id)},
             "name": f"{portfolio_name} Portfolio",
@@ -62,15 +62,40 @@ class GhostfolioBaseSensor(CoordinatorEntity, SensorEntity):
             "model": "Portfolio Tracker",
         }
 
+    @property
+    def base_currency(self) -> str:
+        """Return the portfolio base currency, defaulting to EUR."""
+        if not self.coordinator.data:
+            return "EUR"
 
-class GhostfolioCurrentValueSensor(GhostfolioBaseSensor):
+        currency = None
+        if isinstance(self.coordinator.data, dict):
+            currency = self.coordinator.data.get("base_currency")
+            if not currency:
+                performance = self.coordinator.data.get("performance", {})
+                if isinstance(performance, dict):
+                    currency = performance.get("baseCurrency")
+
+        return currency or "EUR"
+
+
+class GhostfolioMonetarySensor(GhostfolioBaseSensor):
+    """Base class for monetary Ghostfolio sensors."""
+
+    _attr_device_class = SensorDeviceClass.MONETARY
+    _attr_state_class = SensorStateClass.TOTAL
+    _attr_suggested_display_precision = 2
+
+    @property
+    def native_unit_of_measurement(self) -> str:
+        """Return native unit of measurement based on base currency."""
+        return self.base_currency
+
+
+class GhostfolioCurrentValueSensor(GhostfolioMonetarySensor):
     """Sensor for current portfolio value."""
 
     _attr_translation_key = "current_value"
-    _attr_device_class = SensorDeviceClass.MONETARY
-    _attr_state_class = SensorStateClass.TOTAL
-    _attr_native_unit_of_measurement = "EUR"
-    _attr_suggested_display_precision = 2
 
     def __init__(self, coordinator: GhostfolioDataUpdateCoordinator, config_entry: ConfigEntry) -> None:
         """Initialize the sensor."""
@@ -97,14 +122,10 @@ class GhostfolioCurrentValueSensor(GhostfolioBaseSensor):
         }
 
 
-class GhostfolioNetPerformanceSensor(GhostfolioBaseSensor):
+class GhostfolioNetPerformanceSensor(GhostfolioMonetarySensor):
     """Sensor for net performance."""
 
     _attr_translation_key = "net_performance"
-    _attr_device_class = SensorDeviceClass.MONETARY
-    _attr_state_class = SensorStateClass.TOTAL
-    _attr_native_unit_of_measurement = "EUR"
-    _attr_suggested_display_precision = 2
 
     def __init__(self, coordinator: GhostfolioDataUpdateCoordinator, config_entry: ConfigEntry) -> None:
         """Initialize the sensor."""
@@ -143,14 +164,10 @@ class GhostfolioNetPerformancePercentSensor(GhostfolioBaseSensor):
         return percent_value * 100 if percent_value is not None else None
 
 
-class GhostfolioTotalInvestmentSensor(GhostfolioBaseSensor):
+class GhostfolioTotalInvestmentSensor(GhostfolioMonetarySensor):
     """Sensor for total investment."""
 
     _attr_translation_key = "total_investment"
-    _attr_device_class = SensorDeviceClass.MONETARY
-    _attr_state_class = SensorStateClass.TOTAL
-    _attr_native_unit_of_measurement = "EUR"
-    _attr_suggested_display_precision = 2
 
     def __init__(self, coordinator: GhostfolioDataUpdateCoordinator, config_entry: ConfigEntry) -> None:
         """Initialize the sensor."""
@@ -165,14 +182,10 @@ class GhostfolioTotalInvestmentSensor(GhostfolioBaseSensor):
         return self.coordinator.data.get("performance", {}).get("totalInvestment")
 
 
-class GhostfolioNetPerformanceWithCurrencySensor(GhostfolioBaseSensor):
+class GhostfolioNetPerformanceWithCurrencySensor(GhostfolioMonetarySensor):
     """Sensor for net performance with currency effect."""
 
     _attr_translation_key = "net_performance_with_currency"
-    _attr_device_class = SensorDeviceClass.MONETARY
-    _attr_state_class = SensorStateClass.TOTAL
-    _attr_native_unit_of_measurement = "EUR"
-    _attr_suggested_display_precision = 2
 
     def __init__(self, coordinator: GhostfolioDataUpdateCoordinator, config_entry: ConfigEntry) -> None:
         """Initialize the sensor."""
