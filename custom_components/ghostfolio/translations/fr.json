@@ -20,7 +20,7 @@
     },
     "data_description": {
       "portfolio_name": "Un nom convivial pour cette instance de portefeuille",
-      "base_url": "L'URL de votre instance Ghostfolio (par ex. https://votre-ghostfolio.com)",
+      "base_url": "L'URL de votre instance Ghostfolio",
       "access_token": "Votre token d'accès Ghostfolio pour l'authentification API",
       "verify_ssl": "Désactivez ceci si vous utilisez des proxys d'entreprise comme Zscaler qui interceptent les certificats SSL",
       "update_interval": "Fréquence de mise à jour des données de portefeuille (en minutes, min: 1, max: 1440)",

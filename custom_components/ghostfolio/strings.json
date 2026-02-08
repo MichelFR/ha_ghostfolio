@@ -14,7 +14,7 @@
         },
         "data_description": {
           "portfolio_name": "A friendly name for this portfolio instance",
-          "base_url": "The URL of your Ghostfolio instance (e.g., https://your-ghostfolio.com)",
+          "base_url": "The URL of your Ghostfolio instance",
           "access_token": "Your Ghostfolio access token for API authentication",
           "verify_ssl": "Disable this if you're using corporate proxies like Zscaler that intercept SSL certificates",
           "update_interval": "How often to update portfolio data (in minutes, min: 1, max: 1440)",
@@ -34,7 +34,7 @@
         },
         "data_description": {
           "portfolio_name": "A friendly name for this portfolio instance",
-          "base_url": "The URL of your Ghostfolio instance (e.g., https://your-ghostfolio.com)",
+          "base_url": "The URL of your Ghostfolio instance",
           "access_token": "Your Ghostfolio access token for API authentication",
           "verify_ssl": "Disable this if you're using corporate proxies like Zscaler that intercept SSL certificates",
           "update_interval": "How often to update portfolio data (in minutes, min: 1, max: 1440)",

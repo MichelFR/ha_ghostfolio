@@ -20,7 +20,7 @@
     },
     "data_description": {
       "portfolio_name": "Ein benutzerfreundlicher Name für diese Portfolio-Instanz",
-      "base_url": "Die URL Ihrer Ghostfolio-Instanz (z.B. https://ihr-ghostfolio.com)",
+      "base_url": "Die URL Ihrer Ghostfolio-Instanz",
       "access_token": "Ihr Ghostfolio-Zugangstoken für die API-Authentifizierung",
       "verify_ssl": "Deaktivieren Sie dies, wenn Sie Unternehmens-Proxys wie Zscaler verwenden, die SSL-Zertifikate abfangen",
       "update_interval": "Wie oft Portfolio-Daten aktualisiert werden sollen (in Minuten, min: 1, max: 1440)",
