@@ -62,7 +62,7 @@ This integration uses the following Ghostfolio API endpoints:
 
 ## Data Update Frequency
 
-The integration updates portfolio data every 15 minutes by default. This can be customized if needed.
+The integration updates portfolio data every 15 minutes by default. To change the polling interval (1–1440 minutes), go to Settings → Devices & Services → Ghostfolio and click **Configure**. The new interval takes effect immediately, without restarting Home Assistant.
 
 ## Support
 

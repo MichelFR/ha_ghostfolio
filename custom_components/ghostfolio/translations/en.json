@@ -51,6 +51,19 @@
       "reconfigure_successful": "Configuration updated successfully"
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Ghostfolio Options",
+        "data": {
+          "update_interval": "Update Interval"
+        },
+        "data_description": {
+          "update_interval": "How often to update portfolio data (in minutes, min: 1, max: 1440)"
+        }
+      }
+    }
+  },
   "entity": {
     "sensor": {
       "current_value": {

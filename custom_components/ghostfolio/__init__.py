@@ -33,20 +33,41 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         verify_ssl=entry.data.get("verify_ssl", True),
     )
 
-    update_interval = entry.data.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL)
     performance_ranges = entry.data.get(
         CONF_PERFORMANCE_RANGES, DEFAULT_PERFORMANCE_RANGES
     )
     coordinator = GhostfolioDataUpdateCoordinator(
-        hass, api, update_interval, performance_ranges
+        hass, api, get_update_interval(entry), performance_ranges
     )
     await coordinator.async_config_entry_first_refresh()
 
     entry.runtime_data = coordinator
+    entry.async_on_unload(entry.add_update_listener(_async_update_listener))
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     return True
+
+
+def get_update_interval(entry: ConfigEntry) -> int:
+    """Return the polling interval in minutes; options override the setup value."""
+    return int(
+        entry.options.get(
+            CONF_UPDATE_INTERVAL,
+            entry.data.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL),
+        )
+    )
+
+
+async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Apply a changed polling interval without reloading the entry."""
+    coordinator: GhostfolioDataUpdateCoordinator = entry.runtime_data
+    update_interval = timedelta(minutes=get_update_interval(entry))
+    if coordinator.update_interval == update_interval:
+        return
+    coordinator.update_interval = update_interval
+    # Refresh now so the next poll is scheduled with the new interval
+    await coordinator.async_request_refresh()
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

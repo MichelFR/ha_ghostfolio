@@ -7,7 +7,7 @@ from typing import Any
 import voluptuous as vol
 
 from homeassistant import config_entries
-
+from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.selector import (
     BooleanSelector,
@@ -23,6 +23,7 @@ from homeassistant.helpers.selector import (
     TextSelectorType,
 )
 
+from . import get_update_interval
 from .api import GhostfolioAPI
 from .const import (
     CONF_ACCESS_TOKEN, 
@@ -39,11 +40,28 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+UPDATE_INTERVAL_SELECTOR = NumberSelector(
+    NumberSelectorConfig(
+        mode=NumberSelectorMode.BOX,
+        min=1,
+        max=1440,  # Max 24 hours
+        unit_of_measurement="minutes",
+    )
+)
+
 
 class GhostfolioConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Ghostfolio."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> GhostfolioOptionsFlow:
+        """Get the options flow for this handler."""
+        return GhostfolioOptionsFlow()
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -107,14 +125,7 @@ class GhostfolioConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         )
                     ),
                     vol.Optional(CONF_VERIFY_SSL, default=True): BooleanSelector(),
-                    vol.Optional(CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL): NumberSelector(
-                        NumberSelectorConfig(
-                            mode=NumberSelectorMode.BOX,
-                            min=1,
-                            max=1440,  # Max 24 hours
-                            unit_of_measurement="minutes",
-                        )
-                    ),
+                    vol.Optional(CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL): UPDATE_INTERVAL_SELECTOR,
                     vol.Required(
                         CONF_PERFORMANCE_RANGES, default=DEFAULT_PERFORMANCE_RANGES
                     ): SelectSelector(
@@ -164,9 +175,14 @@ class GhostfolioConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     self._abort_if_unique_id_mismatch(reason="wrong_account")
 
                     # Update the configuration entry
+                    # Keep the options flow's interval in sync, since options take precedence
                     return self.async_update_reload_and_abort(
                         config_entry,
                         data_updates=user_input,
+                        options={
+                            **config_entry.options,
+                            CONF_UPDATE_INTERVAL: int(user_input[CONF_UPDATE_INTERVAL]),
+                        },
                     )
                 else:
                     errors["base"] = "auth_failed"
@@ -175,7 +191,10 @@ class GhostfolioConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["base"] = "cannot_connect"
 
         # Pre-fill the form with current values
-        current_data = config_entry.data
+        current_data = {
+            **config_entry.data,
+            CONF_UPDATE_INTERVAL: get_update_interval(config_entry),
+        }
         return self.async_show_form(
             step_id="reconfigure",
             data_schema=self.add_suggested_values_to_schema(
@@ -197,14 +216,7 @@ class GhostfolioConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                             )
                         ),
                         vol.Optional(CONF_VERIFY_SSL, default=True): BooleanSelector(),
-                        vol.Optional(CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL): NumberSelector(
-                            NumberSelectorConfig(
-                                mode=NumberSelectorMode.BOX,
-                                min=1,
-                                max=1440,  # Max 24 hours
-                                unit_of_measurement="minutes",
-                            )
-                        ),
+                        vol.Optional(CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL): UPDATE_INTERVAL_SELECTOR,
                         vol.Required(
                             CONF_PERFORMANCE_RANGES, default=DEFAULT_PERFORMANCE_RANGES
                         ): SelectSelector(
@@ -219,4 +231,32 @@ class GhostfolioConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 current_data,
             ),
             errors=errors,
+        )
+
+
+class GhostfolioOptionsFlow(config_entries.OptionsFlow):
+    """Handle Ghostfolio options."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Manage the polling interval."""
+        if user_input is not None:
+            return self.async_create_entry(
+                data={
+                    **self.config_entry.options,
+                    CONF_UPDATE_INTERVAL: int(user_input[CONF_UPDATE_INTERVAL]),
+                }
+            )
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_UPDATE_INTERVAL,
+                        default=get_update_interval(self.config_entry),
+                    ): UPDATE_INTERVAL_SELECTOR,
+                }
+            ),
         )
